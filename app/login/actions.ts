@@ -52,7 +52,7 @@ export async function loginAction(data: LoginInput) {
     
     console.log('Cookie establecida para usuario:', user.email)
     
-    // Return success with user info for verification
+    // Return success - let the component handle navigation
     return { 
       success: true,
       user: {

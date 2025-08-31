@@ -6,10 +6,12 @@ export async function middleware(request: NextRequest) {
   
   // Define protected and public routes
   const protectedRoutes = ['/dashboard', '/onboarding']
+  const publicRoutes = ['/login', '/signup', '/']
   const publicApiRoutes = ['/api/auth/login', '/api/auth/register', '/api/auth/verify-email']
   
   // Check route type
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
+  const isPublicRoute = publicRoutes.includes(pathname)
   const isPublicApiRoute = publicApiRoutes.some(route => pathname.startsWith(route))
   
   // Get user from token
@@ -20,11 +22,14 @@ export async function middleware(request: NextRequest) {
     console.log(`Middleware - Ruta: ${pathname}, Usuario autenticado: ${!!user}`)
   }
   
-  // Only redirect unauthenticated users from protected routes
+  // Redirect unauthenticated users from protected routes to login
   if (isProtectedRoute && !user) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('from', pathname)
-    return NextResponse.redirect(loginUrl)
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+  
+  // Redirect authenticated users from login/signup to dashboard
+  if (user && (pathname === '/login' || pathname === '/signup')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
   
   // Handle API routes

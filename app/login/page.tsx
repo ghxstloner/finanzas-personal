@@ -17,7 +17,6 @@ import { toast } from "sonner"
 
 function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
-  const [isRedirecting, setIsRedirecting] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -34,47 +33,13 @@ function LoginForm() {
     setIsLoading(true)
 
     try {
-      console.log('Iniciando login...')
       const result = await loginAction(data)
-      console.log('Resultado del login:', result)
       
       if (result?.success) {
         toast.success("¡Inicio de sesión exitoso!")
-        setIsRedirecting(true)
         
-        // Obtener el parámetro 'from' de la URL o usar dashboard como fallback
-        const redirectTo = searchParams.get('from') || '/dashboard'
-        
-        // Validar que el redirect es seguro (no permite URLs externas)
-        const isValidRedirect = redirectTo.startsWith('/') && !redirectTo.startsWith('//')
-        const finalRedirect = isValidRedirect ? redirectTo : '/dashboard'
-        
-        console.log('Redirigiendo a:', finalRedirect)
-        
-        // Estrategia de redirección múltiple para garantizar éxito
-        setTimeout(() => {
-          console.log('Ejecutando redirección...')
-          
-          // Primer intento: window.location.replace (más confiable)
-          try {
-            window.location.replace(finalRedirect)
-          } catch (error) {
-            console.warn('Error con window.location.replace, intentando router.push:', error)
-            
-            // Segundo intento: router.push como fallback
-            setTimeout(() => {
-              router.push(finalRedirect)
-            }, 100)
-          }
-          
-          // Tercer intento: verificación después de 2 segundos
-          setTimeout(() => {
-            if (window.location.pathname === '/login') {
-              console.warn('Redirección falló, forzando con window.location.href')
-              window.location.href = finalRedirect
-            }
-          }, 2000)
-        }, 1000)
+        // Force a hard navigation to trigger middleware
+        window.location.href = '/dashboard'
       } else if (result?.error) {
         toast.error(result.error)
         setIsLoading(false)
@@ -82,9 +47,9 @@ function LoginForm() {
         toast.error("Error inesperado. Intenta de nuevo.")
         setIsLoading(false)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error)
-      toast.error("Error de conexión. Intenta de nuevo.")
+      toast.error(error.message || "Error de conexión. Intenta de nuevo.")
       setIsLoading(false)
     }
   }
@@ -167,14 +132,9 @@ function LoginForm() {
               <Button
                 type="submit"
                 className="w-full bg-blue-600 hover:bg-blue-700"
-                disabled={isLoading || isRedirecting}
+                disabled={isLoading}
               >
-                {isRedirecting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Redirigiendo al dashboard...
-                  </>
-                ) : isLoading ? (
+                {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Iniciando sesión...
